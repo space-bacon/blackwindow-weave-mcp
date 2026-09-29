@@ -1,0 +1,46 @@
+{
+  "name": "blackwindow-weave-mcp",
+  "version": "0.1.0",
+  "description": "Semantic search over the folders on your machine for any MCP client, with the Motherlode code-search encoder running locally.",
+  "type": "module",
+  "bin": {
+    "blackwindow-weave-mcp": "src/index.js"
+  },
+  "files": [
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "BUSL-1.1",
+  "author": "Sunstone North Lab LLC",
+  "homepage": "https://github.com/space-bacon/blackwindow-weave-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/space-bacon/blackwindow-weave-mcp.git"
+  },
+  "mcpName": "io.github.space-bacon/blackwindow-weave-mcp",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "semantic-search",
+    "code-search",
+    "codebase",
+    "embeddings",
+    "rag",
+    "local-first",
+    "claude-code",
+    "cursor"
+  ],
+  "scripts": {
+    "test": "node test/smoke.mjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "4.3.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
+    "zod": "^3.25.0"
+  }
+}

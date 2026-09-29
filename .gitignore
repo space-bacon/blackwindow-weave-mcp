@@ -1,0 +1,3 @@
+node_modules/
+test/smoke.json
+test/smoke.json.tmp
