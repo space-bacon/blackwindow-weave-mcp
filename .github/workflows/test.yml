@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       spec:
-        description: A published version to test instead of the packed tree, for example blackwindow-weave-mcp@0.1.1
+        description: A published version to test instead of the packed tree, for example blackwindow-weave-mcp@0.1.2
         required: false
         default: ""
 

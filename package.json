@@ -1,7 +1,7 @@
 {
   "name": "blackwindow-weave-mcp",
-  "version": "0.1.1",
-  "description": "Semantic search over the folders on your machine for any MCP client, with the Motherlode code-search encoder running locally.",
+  "version": "0.1.2",
+  "description": "Sunstone Weave: local semantic code search for any MCP client, with the Motherlode code-search encoder running on your CPU.",
   "type": "module",
   "bin": {
     "blackwindow-weave-mcp": "src/index.js"

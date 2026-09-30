@@ -18,7 +18,7 @@ Install it once from a terminal, before adding it to a client. This installs the
 the version once the runtime has loaded:
 
 ```sh
-npx -y blackwindow-weave-mcp@0.1.1 --version
+npx -y blackwindow-weave-mcp@0.1.2 --version
 ```
 
 On GitHub's hosted runners, from an empty npm cache, this first install took 7 to 13 s on Linux and macOS and 55 to
@@ -34,7 +34,7 @@ On Linux x64, ONNX Runtime also downloads 236 MB of CUDA libraries during the in
 never loads them, so you can skip them:
 
 ```sh
-ONNXRUNTIME_NODE_INSTALL=skip npx -y blackwindow-weave-mcp@0.1.1 --version
+ONNXRUNTIME_NODE_INSTALL=skip npx -y blackwindow-weave-mcp@0.1.2 --version
 ```
 
 ## Add it to a client
@@ -44,7 +44,7 @@ ONNXRUNTIME_NODE_INSTALL=skip npx -y blackwindow-weave-mcp@0.1.1 --version
 Claude Code:
 
 ```sh
-claude mcp add weave -- npx -y blackwindow-weave-mcp@0.1.1 --folder /path/to/your/repo
+claude mcp add weave -- npx -y blackwindow-weave-mcp@0.1.2 --folder /path/to/your/repo
 ```
 
 VS Code, in `.vscode/mcp.json`:
@@ -52,7 +52,7 @@ VS Code, in `.vscode/mcp.json`:
 ```json
 {
   "servers": {
-    "weave": { "type": "stdio", "command": "npx", "args": ["-y", "blackwindow-weave-mcp@0.1.1", "--folder", "${workspaceFolder}"] }
+    "weave": { "type": "stdio", "command": "npx", "args": ["-y", "blackwindow-weave-mcp@0.1.2", "--folder", "${workspaceFolder}"] }
   }
 }
 ```
@@ -62,7 +62,7 @@ Cursor, Claude Desktop, Windsurf and most other clients:
 ```json
 {
   "mcpServers": {
-    "weave": { "command": "npx", "args": ["-y", "blackwindow-weave-mcp@0.1.1", "--folder", "/path/to/your/repo"] }
+    "weave": { "command": "npx", "args": ["-y", "blackwindow-weave-mcp@0.1.2", "--folder", "/path/to/your/repo"] }
   }
 }
 ```
@@ -72,7 +72,7 @@ Cursor, Claude Desktop, Windsurf and most other clients:
 On Windows `npx` is a batch file, which a client can only start through `cmd /c`. Claude Code:
 
 ```sh
-claude mcp add weave -- cmd /c npx -y blackwindow-weave-mcp@0.1.1 --folder C:\path\to\your\repo
+claude mcp add weave -- cmd /c npx -y blackwindow-weave-mcp@0.1.2 --folder C:\path\to\your\repo
 ```
 
 Cursor, Claude Desktop, Windsurf and most other clients:
@@ -80,7 +80,7 @@ Cursor, Claude Desktop, Windsurf and most other clients:
 ```json
 {
   "mcpServers": {
-    "weave": { "command": "cmd", "args": ["/c", "npx", "-y", "blackwindow-weave-mcp@0.1.1", "--folder", "C:/path/to/your/repo"] }
+    "weave": { "command": "cmd", "args": ["/c", "npx", "-y", "blackwindow-weave-mcp@0.1.2", "--folder", "C:/path/to/your/repo"] }
   }
 }
 ```
@@ -89,9 +89,9 @@ In VS Code the same `command` and `args` go under `servers` in `.vscode/mcp.json
 
 ### Installed globally
 
-`npm install -g blackwindow-weave-mcp@0.1.1` installs a `blackwindow-weave-mcp` command, which a client can start
+`npm install -g blackwindow-weave-mcp@0.1.2` installs a `blackwindow-weave-mcp` command, which a client can start
 directly (`cmd /c blackwindow-weave-mcp` on Windows). To run from this repository instead of npm, replace
-`blackwindow-weave-mcp@0.1.1` in the arguments with `github:space-bacon/blackwindow-weave-mcp`.
+`blackwindow-weave-mcp@0.1.2` in the arguments with `github:space-bacon/blackwindow-weave-mcp`.
 
 | option | meaning |
 | --- | --- |

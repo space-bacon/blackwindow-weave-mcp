@@ -12,7 +12,8 @@ import { Embedder } from "./embed.js";
 import { Store } from "./store.js";
 import { Weave, canon } from "./weave.js";
 
-const VERSION = "0.1.1";
+const VERSION = "0.1.2";
+const ICON = `https://raw.githubusercontent.com/space-bacon/blackwindow-weave-mcp/v${VERSION}/icon.png`;
 const WAIT_MS = Number(process.env.BLACKWINDOW_WEAVE_WAIT_MS) || 25_000;
 const argv = process.argv.slice(2);
 // Run once in a terminal, --version installs the package and loads its native runtime outside a client's start-up
@@ -29,7 +30,12 @@ const cache = many("--cache")[0] || process.env.BLACKWINDOW_WEAVE_CACHE || path.
 const log = (s) => process.stderr.write(`[weave] ${s}\n`);
 
 const weave = new Weave(new Store(cache), new Embedder(cache));
-const server = new McpServer({ name: "blackwindow-weave", version: VERSION });
+const server = new McpServer({
+  name: "blackwindow-weave",
+  title: "Sunstone Weave: Local Semantic Code Search",
+  version: VERSION,
+  icons: [{ src: ICON, mimeType: "image/png", sizes: ["256x256"] }],
+});
 const text = (s) => ({ content: [{ type: "text", text: s }] });
 
 server.registerTool("weave_folder", {
