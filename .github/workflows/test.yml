@@ -1,0 +1,44 @@
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.os }}, Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
+        node: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: npm ci
+        shell: bash
+        run: |
+          start=$(date +%s)
+          npm ci
+          echo "npm ci took $(( $(date +%s) - start )) s"
+          ls -la "node_modules/onnxruntime-node/bin/napi-v6/$(node -p process.platform)/$(node -p process.arch)"
+      - name: end to end over stdio (test/smoke.mjs)
+        run: node test/smoke.mjs
+      - name: the packed package, started through npx
+        shell: bash
+        run: |
+          npm pack
+          start=$(date +%s)
+          node test/installed.mjs blackwindow-weave-mcp-*.tgz
+          echo "installed test took $(( $(date +%s) - start )) s"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-${{ matrix.os }}-node${{ matrix.node }}
+          path: test/smoke.json
+          if-no-files-found: ignore
