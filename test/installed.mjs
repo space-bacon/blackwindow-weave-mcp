@@ -20,12 +20,14 @@ const isTarball = arg.endsWith(".tgz");
 const target = isTarball ? path.resolve(arg) : arg;
 if (!target || (isTarball && !fs.existsSync(target))) { console.error(`usage: node test/installed.mjs <tarball | spec>`); process.exit(2); }
 const win = process.platform === "win32", where = { platform: `${process.platform}-${process.arch}`, node: process.version, target: isTarball ? path.basename(target) : target };
+// Inside this checkout npx counts its package.json as the spec already installed, installs nothing, and finds no command.
+const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "weave-user-"));
 
 // npx reads a bare path as a command to run, so a tarball is named as the package and the bin as the command.
 const npx = isTarball ? ["-y", "--package", target, "blackwindow-weave-mcp"] : ["-y", target];
 
 const run = (cmd, args) => {
-  const t0 = Date.now(), r = spawn.sync(cmd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] });
+  const t0 = Date.now(), r = spawn.sync(cmd, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] });
   return { status: r.status, printed: (r.stdout || "").trim().split("\n").pop(), secs: (Date.now() - t0) / 1000 };
 };
 
@@ -38,7 +40,7 @@ async function launch(via, command, args, full) {
   const client = new Client({ name: "installed", version: "0" });
   try {
     const t0 = Date.now();
-    await client.connect(new StdioClientTransport({ command, args, env: { ...process.env, BLACKWINDOW_WEAVE_CACHE: cache }, stderr: "inherit" }));
+    await client.connect(new StdioClientTransport({ command, args, cwd, env: { ...process.env, BLACKWINDOW_WEAVE_CACHE: cache }, stderr: "inherit" }));
     out.startSecs = (Date.now() - t0) / 1000;
     out.tools = (await client.listTools()).tools.map((t) => t.name);
     const call = async (name, a) => {
@@ -69,7 +71,7 @@ async function launch(via, command, args, full) {
 // The install a user runs once in a terminal before adding the server to a client. Launches below reuse it.
 const warm = run("npx", [...npx, "--version"]);
 report({ step: "npx --version", ...warm, ok: warm.status === 0 });
-if (warm.status !== 0) process.exit(1);
+if (warm.status !== 0) { fs.rmSync(cwd, { recursive: true, force: true }); process.exit(1); }
 await launch("npx", "npx", npx, true);
 if (win) await launch("cmd /c npx", "cmd", ["/c", "npx", ...npx], false);
 
@@ -81,4 +83,5 @@ if (global.status === 0) {
   if (win) await launch("cmd /c global command", "cmd", ["/c", "blackwindow-weave-mcp"], false);
   run("npm", ["uninstall", "-g", "blackwindow-weave-mcp"]);
 }
+fs.rmSync(cwd, { recursive: true, force: true });
 process.exit(failed ? 1 : 0);
