@@ -26,16 +26,33 @@ jobs:
           start=$(date +%s)
           npm ci
           echo "npm ci took $(( $(date +%s) - start )) s"
-          ls -la "node_modules/onnxruntime-node/bin/napi-v6/$(node -p process.platform)/$(node -p process.arch)"
       - name: end to end over stdio (test/smoke.mjs)
         run: node test/smoke.mjs
-      - name: the packed package, started through npx
+      - name: the packed package, installed from a cold npm cache and started through npx
         shell: bash
         run: |
           npm pack
-          start=$(date +%s)
+          npm cache clean --force
           node test/installed.mjs blackwindow-weave-mcp-*.tgz
-          echo "installed test took $(( $(date +%s) - start )) s"
+      - name: what a first install costs, per dependency (diagnostic)
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          for spec in onnxruntime-node@1.30.0 @huggingface/transformers@4.3.0; do
+            dir="$RUNNER_TEMP/diag-$RANDOM"; mkdir -p "$dir"
+            export npm_config_cache="$dir/cache"
+            start=$(date +%s)
+            npm install --prefix "$dir" --no-audit --no-fund "$spec" > /dev/null
+            echo "$spec: cold install $(( $(date +%s) - start )) s, $(du -sh "$dir/node_modules" | cut -f1)"
+          done
+          if [ "$RUNNER_OS" = Linux ] && [ "$(uname -m)" = x86_64 ]; then
+            dir="$RUNNER_TEMP/diag-skip"; mkdir -p "$dir"
+            export npm_config_cache="$dir/cache"
+            start=$(date +%s)
+            ONNXRUNTIME_NODE_INSTALL=skip npm install --prefix "$dir" --no-audit --no-fund onnxruntime-node@1.30.0 > /dev/null
+            echo "onnxruntime-node@1.30.0 with ONNXRUNTIME_NODE_INSTALL=skip: cold install $(( $(date +%s) - start )) s, $(du -sh "$dir/node_modules" | cut -f1)"
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
