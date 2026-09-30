@@ -4,6 +4,11 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      spec:
+        description: A published version to test instead of the packed tree, for example blackwindow-weave-mcp@0.1.1
+        required: false
+        default: ""
 
 jobs:
   test:
@@ -28,12 +33,14 @@ jobs:
           echo "npm ci took $(( $(date +%s) - start )) s"
       - name: end to end over stdio (test/smoke.mjs)
         run: node test/smoke.mjs
-      - name: the packed package, installed from a cold npm cache and started through npx
+      - name: the package as a user installs it, from a cold npm cache
         shell: bash
+        env:
+          SPEC: ${{ inputs.spec }}
         run: |
           npm pack
           npm cache clean --force
-          node test/installed.mjs blackwindow-weave-mcp-*.tgz
+          if [ -n "$SPEC" ]; then node test/installed.mjs "$SPEC"; else node test/installed.mjs blackwindow-weave-mcp-*.tgz; fi
       - name: what a first install costs, per dependency (diagnostic)
         if: always()
         continue-on-error: true

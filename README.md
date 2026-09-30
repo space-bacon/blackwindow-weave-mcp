@@ -10,14 +10,41 @@ bytes, in the cache. With the files cached, a run makes none.
 
 This is the weave from [Black Window](https://blackwindow.xyz) and the
 [Sunstone](https://marketplace.visualstudio.com/items?itemName=sunstonenorth.sunstone) VS Code extension, packaged for
-clients that speak the Model Context Protocol.
+clients that speak the Model Context Protocol. It runs on macOS, Linux and Windows with Node 20 or later.
+
+## Install
+
+Install it once from a terminal, before adding it to a client. This installs the package and ONNX Runtime and prints
+the version once the runtime has loaded:
+
+```sh
+npx -y blackwindow-weave-mcp@0.1.1 --version
+```
+
+On GitHub's hosted runners, from an empty npm cache, this first install took 7 to 13 s on Linux and macOS and 55 to
+65 s on Windows. Clients wait a limited time for a server to start (the MCP SDK's default is 60 s), and a client that
+stops waiting in the middle of an install leaves a broken copy in npm's cache (see [Troubleshooting](#troubleshooting)).
+Once installed, the server starts in 1 to 3 s.
+
+Keep the version in the client's configuration the same as here. With a version given, npx starts the copy it
+installed; with the bare name, npx (npm 11) looks for a newer version on every start and installs it while the client
+waits.
+
+On Linux x64, ONNX Runtime also downloads 236 MB of CUDA libraries during the install. This server runs on the CPU and
+never loads them, so you can skip them:
+
+```sh
+ONNXRUNTIME_NODE_INSTALL=skip npx -y blackwindow-weave-mcp@0.1.1 --version
+```
 
 ## Add it to a client
+
+### macOS and Linux
 
 Claude Code:
 
 ```sh
-claude mcp add weave -- npx -y blackwindow-weave-mcp --folder /path/to/your/repo
+claude mcp add weave -- npx -y blackwindow-weave-mcp@0.1.1 --folder /path/to/your/repo
 ```
 
 VS Code, in `.vscode/mcp.json`:
@@ -25,7 +52,7 @@ VS Code, in `.vscode/mcp.json`:
 ```json
 {
   "servers": {
-    "weave": { "type": "stdio", "command": "npx", "args": ["-y", "blackwindow-weave-mcp", "--folder", "${workspaceFolder}"] }
+    "weave": { "type": "stdio", "command": "npx", "args": ["-y", "blackwindow-weave-mcp@0.1.1", "--folder", "${workspaceFolder}"] }
   }
 }
 ```
@@ -35,18 +62,62 @@ Cursor, Claude Desktop, Windsurf and most other clients:
 ```json
 {
   "mcpServers": {
-    "weave": { "command": "npx", "args": ["-y", "blackwindow-weave-mcp", "--folder", "/path/to/your/repo"] }
+    "weave": { "command": "npx", "args": ["-y", "blackwindow-weave-mcp@0.1.1", "--folder", "/path/to/your/repo"] }
   }
 }
 ```
 
-To run from this repository instead of npm, replace `blackwindow-weave-mcp` in the arguments with
-`github:space-bacon/blackwindow-weave-mcp`. Node 20 or later is required.
+### Windows
+
+On Windows `npx` is a batch file, which a client can only start through `cmd /c`. Claude Code:
+
+```sh
+claude mcp add weave -- cmd /c npx -y blackwindow-weave-mcp@0.1.1 --folder C:\path\to\your\repo
+```
+
+Cursor, Claude Desktop, Windsurf and most other clients:
+
+```json
+{
+  "mcpServers": {
+    "weave": { "command": "cmd", "args": ["/c", "npx", "-y", "blackwindow-weave-mcp@0.1.1", "--folder", "C:/path/to/your/repo"] }
+  }
+}
+```
+
+In VS Code the same `command` and `args` go under `servers` in `.vscode/mcp.json`, with `"type": "stdio"`.
+
+### Installed globally
+
+`npm install -g blackwindow-weave-mcp@0.1.1` installs a `blackwindow-weave-mcp` command, which a client can start
+directly (`cmd /c blackwindow-weave-mcp` on Windows). To run from this repository instead of npm, replace
+`blackwindow-weave-mcp@0.1.1` in the arguments with `github:space-bacon/blackwindow-weave-mcp`.
 
 | option | meaning |
 | --- | --- |
 | `--folder <path>` | Weave this folder when the server starts. Repeatable. Optional: the model can call `weave_folder` itself. |
-| `--cache <dir>` | Where the encoder and the indexes live. Default `~/.cache/blackwindow-weave`, or `BLACKWINDOW_WEAVE_CACHE`. |
+| `--cache <dir>` | Where the encoder and the indexes live. Default `~/.cache/blackwindow-weave` (on Windows `%USERPROFILE%\.cache\blackwindow-weave`), or `BLACKWINDOW_WEAVE_CACHE`. |
+| `--version` | Print the version and exit. |
+
+## Platforms
+
+Every push runs [CI](.github/workflows/test.yml) on Linux (x64 and arm64), Windows (x64) and macOS (Apple silicon),
+each with Node 20, 22 and 24. Each job runs the stdio smoke test below from a checkout. It then installs the packed
+package through npx from an empty npm cache, starts it the way a client does and weaves a folder. On Windows it also
+starts it through `cmd /c`. Last, it installs the package globally and starts it by its command. Other platforms,
+such as Windows on Arm, Intel Macs and Alpine Linux, are not tested.
+
+## Troubleshooting
+
+**The client times out when it first starts the server, or the server stops with `Cannot find module ...
+transformers.node.mjs`.** A first install was interrupted, usually by a client that stopped waiting, and npm kept the
+half-installed copy. Delete npm's npx cache and install again from a terminal with the line under [Install](#install):
+
+- macOS and Linux: `rm -rf ~/.npm/_npx`
+- Windows (PowerShell): `Remove-Item -Recurse -Force "$env:LOCALAPPDATA\npm-cache\_npx"`
+
+**Updating.** Install the new version from a terminal as above, then change the version in the client's
+configuration.
 
 ## Tools
 

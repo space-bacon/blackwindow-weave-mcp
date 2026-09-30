@@ -12,7 +12,7 @@ import { Embedder } from "./embed.js";
 import { Store } from "./store.js";
 import { Weave, canon } from "./weave.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 const WAIT_MS = Number(process.env.BLACKWINDOW_WEAVE_WAIT_MS) || 25_000;
 const argv = process.argv.slice(2);
 // Run once in a terminal, --version installs the package and loads its native runtime outside a client's start-up
