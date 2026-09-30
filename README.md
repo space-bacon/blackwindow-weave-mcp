@@ -23,7 +23,7 @@ npx -y blackwindow-weave-mcp@0.1.1 --version
 
 On GitHub's hosted runners, from an empty npm cache, this first install took 7 to 13 s on Linux and macOS and 55 to
 69 s on Windows. Clients wait a limited time for a server to start (the MCP SDK's default is 60 s), and a client that
-stops waiting in the middle of an install leaves a broken copy in npm's cache (see [Troubleshooting](#troubleshooting)).
+stops waiting in the middle of an install can leave a broken copy in npm's cache (see [Troubleshooting](#troubleshooting)).
 Once installed, the server starts in under 3 s.
 
 Keep the version in the client's configuration the same as here. With a version given, npx starts the copy it
