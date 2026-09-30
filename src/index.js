@@ -10,11 +10,20 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { Embedder } from "./embed.js";
 import { Store } from "./store.js";
-import { Weave } from "./weave.js";
+import { Weave, canon } from "./weave.js";
 
 const VERSION = "0.1.0";
 const WAIT_MS = Number(process.env.BLACKWINDOW_WEAVE_WAIT_MS) || 25_000;
 const argv = process.argv.slice(2);
+// Run once in a terminal, --version installs the package and loads its native runtime outside a client's start-up
+// timeout, which a first install through npx can exceed.
+if (argv.includes("--version") || argv.includes("-v")) { process.stdout.write(`${VERSION}\n`); process.exit(0); }
+if (argv.includes("--help") || argv.includes("-h")) {
+  process.stdout.write(`blackwindow-weave-mcp ${VERSION}: an MCP server over stdio, started by an MCP client.\n\n` +
+    "  --folder <path>   weave this folder at start-up (repeatable)\n  --cache <dir>     where the encoder and the indexes live\n" +
+    "  --version         print the version and exit\n");
+  process.exit(0);
+}
 const many = (flag) => argv.flatMap((a, i) => (a === flag && argv[i + 1] ? [argv[i + 1]] : []));
 const cache = many("--cache")[0] || process.env.BLACKWINDOW_WEAVE_CACHE || path.join(process.env.XDG_CACHE_HOME || path.join(os.homedir(), ".cache"), "blackwindow-weave");
 const log = (s) => process.stderr.write(`[weave] ${s}\n`);
@@ -35,8 +44,8 @@ server.registerTool("weave_folder", {
   const r = await Promise.race([job, new Promise((ok) => setTimeout(ok, WAIT_MS, null))]);
   if (!r) {
     job.catch((e) => log(`${p}: ${e.message || e}`));
-    const s = weave.progress.get(path.resolve(p));
-    return text(`Still weaving ${path.resolve(p)}${s ? ` (${s.done} of ${s.total} passages embedded)` : ""}. It continues in the background; call weave_list to see where it is. Searches include the folder once it finishes.`);
+    const s = weave.progress.get(canon(p));
+    return text(`Still weaving ${canon(p)}${s ? ` (${s.done} of ${s.total} passages embedded)` : ""}. It continues in the background; call weave_list to see where it is. Searches include the folder once it finishes.`);
   }
   return text(`Wove ${r.folder}: ${r.files} files, ${r.passages} passages (${r.embedded} embedded now, ${r.reused} files unchanged, ${r.removed} removed) in ${r.secs.toFixed(1)} s.`);
 });
@@ -74,7 +83,7 @@ server.registerTool("weave_forget", {
   inputSchema: { path: z.string().describe("The woven folder") },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
 }, async ({ path: p }) => {
-  const folder = path.resolve(p);
+  const folder = canon(p);
   weave.loaded.delete(folder);
   return text(weave.store.forget(folder) ? `Forgot ${folder}.` : `${folder} was not woven.`);
 });

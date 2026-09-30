@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { env, pipeline } from "@huggingface/transformers";
+import { retry } from "./store.js";
 
 export const MODEL = "RiverRider/motherlode-code-small-en-v0.1";
 const MEAN = `https://huggingface.co/${MODEL}/resolve/main/centring/mean_shipped.json`;
@@ -26,7 +27,7 @@ export class Embedder {
       if (!r.ok) throw new Error(`the model's mean did not download (${r.status})`);
       fs.mkdirSync(path.dirname(f), { recursive: true });
       fs.writeFileSync(f + ".tmp", await r.text());
-      fs.renameSync(f + ".tmp", f);
+      retry(() => fs.renameSync(f + ".tmp", f));
     }
     return Float32Array.from(JSON.parse(fs.readFileSync(f, "utf8")).mu);
   }

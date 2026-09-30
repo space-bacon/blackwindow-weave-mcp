@@ -7,6 +7,10 @@ import { listFiles, readText } from "./files.js";
 const REFRESH_MS = 30_000, REFRESH_MAX_FILES = 200;
 const concat = (parts, n) => { const out = new Float32Array(n); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; } return out; };
 
+/** A folder's identity: its absolute path, with a Windows drive letter upper-cased, since clients send c:\ and C:\
+ *  for the same folder and each would otherwise get its own index. */
+export const canon = (p) => { const r = path.resolve(p); return process.platform === "win32" ? r.replace(/^[a-z](?=:)/, (d) => d.toUpperCase()) : r; };
+
 export class Weave {
   constructor(store, embedder) { this.store = store; this.embedder = embedder; this.loaded = new Map(); this.running = new Map(); this.checked = new Map(); this.progress = new Map(); this.scope = new Set(); }
 
@@ -17,7 +21,7 @@ export class Weave {
 
   /** Index a folder, or bring its index up to date: files whose size and mtime are unchanged keep their rows. */
   weave(folder, progress = () => {}, opts = {}) {
-    folder = path.resolve(folder);
+    folder = canon(folder);
     if (!opts.maxChanged) this.scope.add(folder);
     const track = (done, total, message) => { this.progress.set(folder, { done, total }); progress(done, total, message); };
     if (!this.running.has(folder)) this.running.set(folder, this.run(folder, track, opts).finally(() => { this.running.delete(folder); this.progress.delete(folder); }));
@@ -72,7 +76,7 @@ export class Weave {
    *  when fewer than 200 of their files changed. */
   async search(query, k = 8, folder) {
     const all = this.store.folders().map((f) => f.folder), mine = all.filter((f) => this.scope.has(f));
-    const targets = folder ? [path.resolve(folder)] : mine.length ? mine : all;
+    const targets = folder ? [canon(folder)] : mine.length ? mine : all;
     const busy = (f) => { const s = this.progress.get(f); return s ? `${f} is still being woven (${s.done} of ${s.total} passages embedded)` : null; };
     if (folder && !this.get(targets[0]) && busy(targets[0])) throw new Error(busy(targets[0]));
     if (!targets.length || (folder && !this.get(targets[0]))) throw new Error(folder ? `${targets[0]} is not woven yet; call weave_folder first` : [...this.progress.keys()].map(busy)[0] || "nothing is woven yet; call weave_folder on a project folder first");

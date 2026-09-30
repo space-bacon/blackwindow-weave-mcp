@@ -45,5 +45,6 @@ export function readText(folder, rel) {
   let buf;
   try { buf = fs.readFileSync(path.join(folder, rel)); } catch { return null; }
   if (buf.subarray(0, 8192).includes(0)) return null;
-  return buf.toString("utf8");
+  const s = buf.toString("utf8");
+  return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
 }
