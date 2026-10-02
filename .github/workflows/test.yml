@@ -33,6 +33,8 @@ jobs:
           echo "npm ci took $(( $(date +%s) - start )) s"
       - name: end to end over stdio (test/smoke.mjs)
         run: node test/smoke.mjs
+      - name: notes kept with weave_remember are searched beside code (test/memory.mjs)
+        run: node test/memory.mjs
       - name: the package as a user installs it, from a cold npm cache
         shell: bash
         env:

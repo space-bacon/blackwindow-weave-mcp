@@ -12,7 +12,10 @@ const concat = (parts, n) => { const out = new Float32Array(n); let o = 0; for (
 export const canon = (p) => { const r = path.resolve(p); return process.platform === "win32" ? r.replace(/^[a-z](?=:)/, (d) => d.toUpperCase()) : r; };
 
 export class Weave {
-  constructor(store, embedder) { this.store = store; this.embedder = embedder; this.loaded = new Map(); this.running = new Map(); this.checked = new Map(); this.progress = new Map(); this.scope = new Set(); }
+  constructor(store, embedder, { memory } = {}) {
+    this.store = store; this.embedder = embedder; this.memory = memory ? canon(memory) : null;
+    this.loaded = new Map(); this.running = new Map(); this.checked = new Map(); this.progress = new Map(); this.scope = new Set();
+  }
 
   get(folder) {
     if (!this.loaded.has(folder)) { const x = this.store.load(folder); if (x) this.loaded.set(folder, x); }
@@ -26,6 +29,21 @@ export class Weave {
     const track = (done, total, message) => { this.progress.set(folder, { done, total }); progress(done, total, message); };
     if (!this.running.has(folder)) this.running.set(folder, this.run(folder, track, opts).finally(() => { this.running.delete(folder); this.progress.delete(folder); }));
     return this.running.get(folder);
+  }
+
+  /** Bring the notes folder's index up to date. The folder stays out of the session's scope: every search includes it
+   *  anyway, and scope would otherwise hide the other woven folders from a client that has only kept notes. */
+  notes(progress) { return this.weave(this.memory, progress, { maxChanged: Infinity }); }
+
+  /** Index the notes folder until it holds `rel`. A weave already running may have listed the folder before the note was
+   *  written, so a second pass follows when the first lacks it. */
+  async indexNote(rel) {
+    for (let pass = 0; pass < 2; pass++) {
+      await this.notes();
+      const x = this.get(this.memory), m = x?.manifest.files[rel];
+      if (m) return { passages: m.rows[1] - m.rows[0], total: x.passages.length };
+    }
+    throw new Error(`${rel} was written but is not in the notes index`);
   }
 
   async run(folder, progress, { maxChanged = Infinity } = {}) {
@@ -72,11 +90,12 @@ export class Weave {
   }
 
   /** The k passages nearest the query by centred cosine, over one woven folder, or else the folders woven or named
-   *  in this session, or else every woven folder. Folders not checked in the last 30 s are brought up to date first
-   *  when fewer than 200 of their files changed. */
+   *  in this session and the kept notes, or else every woven folder. Folders not checked in the last 30 s are brought up to
+   *  date first when fewer than 200 of their files changed. */
   async search(query, k = 8, folder) {
     const all = this.store.folders().map((f) => f.folder), mine = all.filter((f) => this.scope.has(f));
     const targets = folder ? [canon(folder)] : mine.length ? mine : all;
+    if (!folder && this.memory && all.includes(this.memory) && !targets.includes(this.memory)) targets.push(this.memory);
     const busy = (f) => { const s = this.progress.get(f); return s ? `${f} is still being woven (${s.done} of ${s.total} passages embedded)` : null; };
     if (folder && !this.get(targets[0]) && busy(targets[0])) throw new Error(busy(targets[0]));
     if (!targets.length || (folder && !this.get(targets[0]))) throw new Error(folder ? `${targets[0]} is not woven yet; call weave_folder first` : [...this.progress.keys()].map(busy)[0] || "nothing is woven yet; call weave_folder on a project folder first");

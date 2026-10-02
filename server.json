@@ -23,6 +23,13 @@
           "isRequired": false,
           "isSecret": false,
           "format": "string"
+        },
+        {
+          "name": "BLACKWINDOW_WEAVE_MEMORY",
+          "description": "Where notes kept with weave_remember are stored (default ~/.local/share/blackwindow-weave/memory)",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
         }
       ]
     }
